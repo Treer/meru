@@ -1,22 +1,14 @@
 Release thread http://forum.minetest.net/viewtopic.php?id=5159
-For Minetest 0.4.3 and later.
+For latest stable Minetest and compatible back to 0.4.3.
 Depends default.
 License WTFPL.
 
-* A way up to the float lands.
+* Meru mod is a vertical 1 dimensional realm, 1D referring to large scale structure, and can act as a vertical connector between horizontal realms, such as the ground and the floatlands.
 
-* This mod generates a 1 km mountain / tower thing at a chosen position in a newly generated chunk. The lower section has a hollow core surrounded by caves and ledges that help with carving steps to the top. When generated over water the hollow core can be used for jumping down the last 300m.
+* A single spike shaped mountain is created in newly generated chunks, at a random location within a chosen area; by default this area is +/-1024 for use in a new world, to add a mountain to an existing world you need to edit these area parameters to a completely ungenerated part of your world.
 
-* By default this generates near x = 0, z = 272 for testing in new worlds, for any other use you will need to edit the co-ordinate parameters to an ungenerated location.
+* For testing this mod or for cheating edit parameter COORD = true, the co-ordinates of the mountain will be printed to terminal while within the generation area.
 
-* Constructed from stone or red desert stone dependant on biome, when on a biome transition there is a smooth transition of material creating red stripes.
+* No new nodes, the mountain is a hollow cone made of stone and desert stone, with a smooth transition across biome boundaries creating the red stripes. By default the height is 1km, but since i have increased the maximum width to 3x3 chunks the mountain can still look well proportioned when 2km. There are a few cave entrances on the surface, these 'fissure system' caves expand under the surface helping the creation of a path upwards. If the mountain generates over water you can use the central conical void to jump down the last few hundred metres.
 
-* The structure is limited to y = -32 to 1008, 13 chunks in height, and occupies an area of 2x2 chunks. This large area allows a wider structure if wanted, controlled by parameter HGRAD. Parameter VGRAD controls how fast the structure tapers with altitude.
-
-* The lower chunks can take up to 2 minutes to generate depending on tower width.
-
-* No new nodes.
-
-* Grass and trees often spawn on the structure, caused by a cool mapgen bug.
-
-* I refer to the Mount Meru of ancient eastern cosmology. 
+* There are many parameters for fine tuning the structure, some parameters change smoothly with height or distance from the center. Reducing noise to zero at the center creates a perfect spike as a summit. Constant noise throughout often creates floating islands at the summit. Choosing zero noise throughout creates a smooth geometric conical shape. There is a parameter CONVEX to control whether the basic conical structure bulges outwards or is pinched inwards in the middle.
