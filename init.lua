@@ -1,10 +1,3 @@
--- meru 0.3.0 by paramat
--- For latest stable Minetest and compatible back to 0.4.8
--- Depends default
--- License WTFPL
-
--- Voxelmanip version
-
 -- Parameters
 
 local COORD = false -- Print tower co-ordinates to terminal (cheat)
@@ -18,9 +11,11 @@ local BASRAD = 64 -- Average radius at y = -32
 local HEIGHT = 2048 -- Approximate height measured from y = -32
 local CONVEX = 0.6 -- Convexity. <1 = concave, 1 = conical, >1 = convex
 local VOID = 0.4 -- Void threshold. Controls size of central void
-local NOISYRAD = 0.2 -- Noisyness of structure at base radius. 0 = smooth geometric form, 0.3 = noisy
+local NOISYRAD = 0.2 -- Noisyness of structure at base radius.
+						-- 0 = smooth geometric form, 0.3 = noisy.
 local NOISYCEN = 0 -- Noisyness of structure at centre
-local FISOFFBAS = 0.02 -- Fissure noise offset at base. controls size of fissure entrances on outer surface
+local FISOFFBAS = 0.02 -- Fissure noise offset at base,
+						-- controls size of fissure entrances on outer surface.
 local FISOFFTOP = 0.04 -- Fissure noise offset at top
 local FISEXPBAS = 0.6 -- Fissure expansion rate under surface at base
 local FISEXPTOP = 1.2 -- Fissure expansion rate under surface at top
@@ -30,7 +25,7 @@ local FISEXPTOP = 1.2 -- Fissure expansion rate under surface at top
 local np_structure = {
 	offset = 0,
 	scale = 1,
-	spread = {x=64, y=64, z=64},
+	spread = {x = 64, y = 64, z = 64},
 	seed = 46893,
 	octaves = 5,
 	persist = 0.5
@@ -41,24 +36,24 @@ local np_structure = {
 local np_fissure = {
 	offset = 0,
 	scale = 1,
-	spread = {x=24, y=24, z=24},
+	spread = {x = 24, y = 24, z = 24},
 	seed = 92940980987,
 	octaves = 4,
 	persist = 0.5
 }
-
--- End of parameters
 
 -- 2D noise for biome. Parameters must match mgv6 biome noise
 
 local np_biome = {
 	offset = 0,
 	scale = 1,
-	spread = {x=250, y=250, z=250},
+	spread = {x = 250, y = 250, z = 250},
 	seed = 9130,
 	octaves = 3,
 	persist = 0.5
 }
+
+-- Stuff
 
 local cxmin = math.floor((XMIN + 32) / 80) -- limits in chunk co-ordinates
 local czmin = math.floor((ZMIN + 32) / 80)
@@ -75,7 +70,7 @@ minetest.register_node("meru:stone", {
 	description = "Stone",
 	tiles = {"default_stone.png"},
 	is_ground_content = false,
-	groups = {cracky=3, stone=1},
+	groups = {cracky = 3, stone = 1},
 	drop = "default:cobble",
 	sounds = default.node_sound_stone_defaults(),
 })
@@ -84,10 +79,16 @@ minetest.register_node("meru:destone", {
 	description = "Desert Stone",
 	tiles = {"default_desert_stone.png"},
 	is_ground_content = false,
-	groups = {cracky=3, stone=1},
+	groups = {cracky = 3, stone = 1},
 	drop = "default:desert_stone",
 	sounds = default.node_sound_stone_defaults(),
 })
+
+-- Initialize noise objects to nil
+
+local nobj_structure = nil
+local nobj_fissure = nil
+local nobj_biome = nil
 
 -- On generated function
 
@@ -98,14 +99,14 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	end
 
 	local locnoise = minetest.get_perlin(5839090, 2, 0.5, 3)
-	local noisex = locnoise:get2d({x=31,y=23})
-	local noisez = locnoise:get2d({x=17,y=11})
+	local noisex = locnoise:get2d({x = 31, y = 23})
+	local noisez = locnoise:get2d({x = 17, y = 11})
 	local cx = cxav + math.floor(noisex * xnom) -- chunk co ordinates
 	local cz = czav + math.floor(noisez * znom)
 	local merux = 80 * cx + 8
 	local meruz = 80 * cz + 8
 	if COORD then
-		print ("[meru] at x "..merux.." z "..meruz)
+		print ("[meru] at x " .. merux .. " z " .. meruz)
 	end
 	if minp.x < merux - 120 or minp.x > merux + 40
 	or minp.z < meruz - 120 or minp.z > meruz + 40
@@ -120,22 +121,26 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local x1 = maxp.x
 	local y1 = maxp.y
 	local z1 = maxp.z
-	print ("[meru] chunk minp ("..x0.." "..y0.." "..z0..")")
 	
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
-	local area = VoxelArea:new{MinEdge=emin, MaxEdge=emax}
+	local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
 	local data = vm:get_data()
 
 	local c_stone = minetest.get_content_id("meru:stone")
 	local c_destone = minetest.get_content_id("meru:destone")
 
 	local sidelen = x1 - x0 + 1
-	local chulens = {x=sidelen, y=sidelen, z=sidelen}
-	local minposxyz = {x=x0, y=y0, z=z0}
+	local chulens3d = {x = sidelen, y = sidelen, z = sidelen}
+	local chulens2d = {x = sidelen, y = sidelen, z = 1}
+	local minpos3d = {x = x0, y = y0, z = z0}
 
-	local nvals_structure = minetest.get_perlin_map(np_structure, chulens):get3dMap_flat(minposxyz)
-	local nvals_fissure = minetest.get_perlin_map(np_fissure, chulens):get3dMap_flat(minposxyz)
-	local nvals_biome = minetest.get_perlin_map(np_biome, chulens):get2dMap_flat({x=x0+150, y=z0+50})
+	nobj_structure = nobj_structure or minetest.get_perlin_map(np_structure, chulens3d)
+	nobj_fissure = nobj_fissure or minetest.get_perlin_map(np_fissure, chulens3d)
+	nobj_biome = nobj_biome or minetest.get_perlin_map(np_biome, chulens2d)
+
+	local nvals_structure = nobj_structure:get3dMap_flat(minpos3d)
+	local nvals_fissure = nobj_fissure:get3dMap_flat(minpos3d)
+	local nvals_biome = nobj_biome:get2dMap_flat({x = x0 + 150, y = z0 + 50})
 
 	local nixyz = 1 -- 3D noise index
 	local nixz = 1 -- 2D noise index
@@ -176,11 +181,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	end
 
 	vm:set_data(data)
-	vm:set_lighting({day=0, night=0})
+	vm:set_lighting({day = 0, night = 0})
 	vm:calc_lighting()
 	vm:write_to_map(data)
 
 	local chugent = math.ceil((os.clock() - t0) * 1000)
-	print ("[meru] "..chugent.." ms")
+	print ("[meru] " .. chugent .. " ms")
 end)
-
