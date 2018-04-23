@@ -121,7 +121,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local x1 = maxp.x
 	local y1 = maxp.y
 	local z1 = maxp.z
-	
+
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
 	local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
 	local data = vm:get_data()
@@ -142,11 +142,13 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals_fissure = nobj_fissure:get3dMap_flat(minpos3d)
 	local nvals_biome = nobj_biome:get2dMap_flat({x = x0 + 150, y = z0 + 50})
 
+	local vi = area:index(x0, y0, z0)
 	local nixyz = 1 -- 3D noise index
 	local nixz = 1 -- 2D noise index
 	for z = z0, z1 do
+		local vi = vi + (z - z0) * area.zstride
 		for y = y0, y1 do
-			local vi = area:index(x0, y, z)
+			local vi = vi + (y - y0) * area.ystride
 			for x = x0, x1 do
 				local n_structure = nvals_structure[nixyz]
 				local radius = ((x - merux) ^ 2 + (z - meruz) ^ 2) ^ 0.5
