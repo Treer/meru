@@ -2,23 +2,23 @@
 
 local COORD = false -- Print tower co-ordinates to terminal (cheat)
 
-local XMIN = -1024 -- Area for random spawn
-local XMAX = 1024
-local ZMIN = -1024
-local ZMAX = 1024
+local XMIN      = -1024 -- Area for random spawn
+local XMAX      =  1024
+local ZMIN      = -1024
+local ZMAX      =  1024
 
-local BASRAD = 64 -- Average radius at y = -32
-local HEIGHT = 2048 -- Approximate height measured from y = -32
-local CONVEX = 0.6 -- Convexity. <1 = concave, 1 = conical, >1 = convex
-local VOID = 0.4 -- Void threshold. Controls size of central void
-local NOISYRAD = 0.2 -- Noisyness of structure at base radius.
+local BASRAD    = 64    -- Average radius at y = -32
+local HEIGHT    = 2048  -- Approximate height measured from y = -32
+local CONVEX    = 0.6   -- Convexity. <1 = concave, 1 = conical, >1 = convex
+local VOID      = 0.4   -- Void threshold. Controls size of central void
+local NOISYRAD  = 0.2   -- Noisyness of structure at base radius.
 						-- 0 = smooth geometric form, 0.3 = noisy.
-local NOISYCEN = 0 -- Noisyness of structure at centre
-local FISOFFBAS = 0.02 -- Fissure noise offset at base,
+local NOISYCEN  = 0     -- Noisyness of structure at centre
+local FISOFFBAS = 0.02  -- Fissure noise offset at base,
 						-- controls size of fissure entrances on outer surface.
-local FISOFFTOP = 0.04 -- Fissure noise offset at top
-local FISEXPBAS = 0.6 -- Fissure expansion rate under surface at base
-local FISEXPTOP = 1.2 -- Fissure expansion rate under surface at top
+local FISOFFTOP = 0.04  -- Fissure noise offset at top
+local FISEXPBAS = 0.6   -- Fissure expansion rate under surface at base
+local FISEXPTOP = 1.2   -- Fissure expansion rate under surface at top
 
 -- 3D noise for primary structure
 
@@ -104,19 +104,22 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		local noisex = locnoise:get2d({x = 31, y = 23}) / 2
 		local noisez = locnoise:get2d({x = 17, y = 11}) / 2
 
+		local maxBaseRad = BASRAD * (1 + NOISYRAD)
 		merux = math.floor(xmid + noisex * xrad + 0.5)
-		meruz = math.floor(zmid + noisez * zrad + 0.5)
-		merux_min = merux - BASRAD
-		merux_max = merux + BASRAD
-		meruz_min = meruz - BASRAD
-		meruz_max = meruz + BASRAD
+		meruz = math.floor(zmid + noisez * zrad + 0.5)		
+		merux_min = merux - maxBaseRad
+		merux_max = merux + maxBaseRad
+		meruz_min = meruz - maxBaseRad
+		meruz_max = meruz + maxBaseRad
 
 		if COORD then
 			print ("[meru] at x " .. merux .. " z " .. meruz)
 		end
 	end
 
-	if minp.x > merux_max or maxp.x < merux_min or minp.z > meruz_max or maxp.z < meruz_min then
+	if minp.x > merux_max or maxp.x < merux_min or
+	   minp.z > meruz_max or maxp.z < meruz_min or 
+	   minp.y < -32 or minp.y > HEIGHT * 1.2 then
 		return
 	end
 
@@ -150,7 +153,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 
 	local vi = area:index(x0, y0, z0)
 	local nixyz = 1 -- 3D noise index
-	local nixz = 1 -- 2D noise index
+	local nixz  = 1 -- 2D noise index
 	for z = z0, z1 do
 		local vi = vi + (z - z0) * area.zstride
 		for y = y0, y1 do
